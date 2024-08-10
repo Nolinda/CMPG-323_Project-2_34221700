@@ -34,6 +34,14 @@ public partial class JobTelemetry
 
     public Guid ProjectID { get; set; }
     public Project Project { get; set; }
+    public Guid ClientId { get; set; }
+    public Client Client { get; set; }
+    public JobTelemetry(Project project, Client client)
+    {
+        Project = project ?? throw new ArgumentNullException(nameof(project));
+        Client = client ?? throw new ArgumentNullException(nameof(client));
+    }
+
 
 
 }

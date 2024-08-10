@@ -12,4 +12,5 @@ public partial class Client
     public string? PrimaryContactEmail { get; set; }
 
     public DateTime? DateOnboarded { get; set; }
+    public ICollection<JobTelemetry>? JobTelemetries { get; set; }
 }

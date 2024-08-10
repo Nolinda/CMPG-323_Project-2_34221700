@@ -183,30 +183,56 @@ namespace _34221700_Project2_CMPG323.Controllers
             var telemetry = _context.JobTelemetries.Find(telemetryId);
             return telemetry != null;
         }
-       // [HttpGet("GetSavings")]
-        //public async Task<ActionResult> GetSavings(Guid projectId, DateTime startDate, DateTime endDate)
-        //{
-           // var savings = await (from jt in _context.JobTelemetries
-                                 //join p in _context.Projects
-                                // on jt.JobId equals p.ProjectId // Ensure correct matching fields//
-                                 //where p.ProjectID == projectId &&
-                                       //jt.EntryDate >= startDate &&
-                                       //jt.EntryDate <= endDate
-                                 //group jt by p.ProjectID into g
-                                // select new
-                                // {
-                                    // ProjectID = g.Key,
-                                    // TotalTimeSaved = g.Sum(jt => jt.HumanTime) ?? 0,
+       
+        [HttpGet("GetSavings")]
+        public async Task<ActionResult> GetSavings(Guid projectId, DateTime startDate, DateTime endDate)
+        {
+            var savings = await (from jt in _context.JobTelemetries
+                    .Include(jt => jt.Project)
+                                 where jt.Project.ProjectId == projectId &&
+                                       jt.EntryDate >= startDate &&
+                                       jt.EntryDate <= endDate
+                                 group jt by jt.Project.ProjectId into g
+                                 select new
+                                 {
+                                     ProjectID = g.Key,
+                                     TotalTimeSaved = g.Sum(jt => jt.HumanTime) ?? 0,
                                      // TotalCostSaved = g.Sum(jt => jt.CostSaved) // Replace with actual field if available
-                                 //}).FirstOrDefaultAsync();
+                                 }).FirstOrDefaultAsync();
+            if (savings != null)
+            {
+                return Ok(savings);
+            }
+            else
+            {
+                return NotFound("No telemetry data found for the specified project and date range.");
+            }
+        }
+        [HttpGet("GetSavingsByClient")]
+        public async Task<ActionResult> GetSavingsByClients(Guid clientId, DateTime startDate, DateTime endDate)
+        {
+            var savings = await (from jt in _context.JobTelemetries
+                                 where jt.ClientId == clientId &&
+                                       jt.EntryDate >= startDate &&
+                                       jt.EntryDate <= endDate
+                                 group jt by jt.ClientId into g
+                                 select new
+                                 {
+                                     ClientID = g.Key,
+                                     TotalTimeSaved = g.Sum(jt => jt.HumanTime) ?? 0,
+                                     // TotalCostSaved = g.Sum(jt => jt.CostSaved) // Replace with actual field if available
+                                 }).FirstOrDefaultAsync();
 
-            //if (savings == null)
-            //{
-               // return NotFound("No telemetry data found for the specified project and date range.");
-            //}
+            if (savings == null)
+            {
+                return NotFound("No telemetry data found for the specified client and date range.");
+            }
 
-           // return Ok(savings);
-        //}
+            return Ok(savings);
+        }
+
+
+
     }
 }
 

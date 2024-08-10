@@ -29,6 +29,17 @@ public partial class NWUTrendsContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
+        modelBuilder.Entity<JobTelemetry>()
+                .HasOne(jt => jt.Project)
+                .WithMany(p => p.JobTelemetries)
+                .HasForeignKey(jt => jt.ProjectID)
+                .OnDelete(DeleteBehavior.Restrict);
+
+        modelBuilder.Entity<JobTelemetry>()
+               .HasOne(jt => jt.Client)
+               .WithMany(p => p.JobTelemetries)
+               .HasForeignKey(jt => jt.ClientId)
+               .OnDelete(DeleteBehavior.Restrict);
         modelBuilder.Entity<Client>(entity =>
         {
             entity.ToTable("Client", "Config");
