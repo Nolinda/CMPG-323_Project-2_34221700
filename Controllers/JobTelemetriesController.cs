@@ -24,14 +24,20 @@ namespace _34221700_Project2_CMPG323.Controllers
         [HttpGet]
         public async Task<ActionResult<IEnumerable<JobTelemetry>>> GetJobTelemetries()
         {
-            return await _context.JobTelemetries.ToListAsync();
+            return await _context.JobTelemetries
+                .Include(jt => jt.Project)
+                .Include(jt => jt.Client)
+                .ToListAsync();
         }
 
         // GET: api/JobTelemetries/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<JobTelemetry>> GetJobTelemetry(int id)
+        public async Task<ActionResult<JobTelemetry>> GetJobTelemetry(Guid id)
         {
-            var jobTelemetry = await _context.JobTelemetries.FindAsync(id);
+            var jobTelemetry = await _context.JobTelemetries
+                .Include(jt => jt.Project)
+                .Include(jt => jt.Client)
+                .FirstOrDefaultAsync(jt => jt.Id == id);
 
             if (jobTelemetry == null)
             {
@@ -42,9 +48,8 @@ namespace _34221700_Project2_CMPG323.Controllers
         }
 
         // PUT: api/JobTelemetries/5
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutJobTelemetry(int id, JobTelemetry jobTelemetry)
+        public async Task<IActionResult> PutJobTelemetry(Guid id, JobTelemetry jobTelemetry)
         {
             if (id != jobTelemetry.Id)
             {
@@ -73,19 +78,23 @@ namespace _34221700_Project2_CMPG323.Controllers
         }
 
         // POST: api/JobTelemetries
-        // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<JobTelemetry>> PostJobTelemetry(JobTelemetry jobTelemetry)
         {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
             _context.JobTelemetries.Add(jobTelemetry);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction("GetJobTelemetry", new { id = jobTelemetry.Id }, jobTelemetry);
+            return CreatedAtAction(nameof(GetJobTelemetry), new { id = jobTelemetry.Id }, jobTelemetry);
         }
 
         // DELETE: api/JobTelemetries/5
         [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteJobTelemetry(int id)
+        public async Task<IActionResult> DeleteJobTelemetry(Guid id)
         {
             var jobTelemetry = await _context.JobTelemetries.FindAsync(id);
             if (jobTelemetry == null)
@@ -99,14 +108,9 @@ namespace _34221700_Project2_CMPG323.Controllers
             return NoContent();
         }
 
-        private bool JobTelemetryExists(int id)
-        {
-            return _context.JobTelemetries.Any(e => e.Id == id);
-        }
-
-        // PATCH: api/JobTelemetries/{id}
+        // PATCH: api/JobTelemetries/5
         [HttpPatch("{id}")]
-        public async Task<IActionResult> PatchJobTelemetry(int id, [FromBody] JobTelemetry updatedJobTelemetry)
+        public async Task<IActionResult> PatchJobTelemetry(Guid id, [FromBody] JobTelemetry updatedJobTelemetry)
         {
             var jobTelemetry = await _context.JobTelemetries.FindAsync(id);
 
@@ -115,61 +119,17 @@ namespace _34221700_Project2_CMPG323.Controllers
                 return NotFound();
             }
 
-            // Update properties
-            if (updatedJobTelemetry.ProccesId != null)
-            {
-                jobTelemetry.ProccesId = updatedJobTelemetry.ProccesId;
-            }
-
-            if (updatedJobTelemetry.JobId != null)
-            {
-                jobTelemetry.JobId = updatedJobTelemetry.JobId;
-            }
-
-            if (updatedJobTelemetry.QueueId != null)
-            {
-                jobTelemetry.QueueId = updatedJobTelemetry.QueueId;
-            }
-
-            if (updatedJobTelemetry.StepDescription != null)
-            {
-                jobTelemetry.StepDescription = updatedJobTelemetry.StepDescription;
-            }
-
-            if (updatedJobTelemetry.HumanTime.HasValue)
-            {
-                jobTelemetry.HumanTime = updatedJobTelemetry.HumanTime.Value;
-            }
-
-            if (updatedJobTelemetry.UniqueReference != null)
-            {
-                jobTelemetry.UniqueReference = updatedJobTelemetry.UniqueReference;
-            }
-
-            if (updatedJobTelemetry.UniqueReferenceType != null)
-            {
-                jobTelemetry.UniqueReferenceType = updatedJobTelemetry.UniqueReferenceType;
-            }
-
-            if (updatedJobTelemetry.BusinessFunction != null)
-            {
-                jobTelemetry.BusinessFunction = updatedJobTelemetry.BusinessFunction;
-            }
-
-            if (updatedJobTelemetry.Geography != null)
-            {
-                jobTelemetry.Geography = updatedJobTelemetry.Geography;
-            }
-
-            if (updatedJobTelemetry.ExcludeFromTimeSaving.HasValue)
-            {
-                jobTelemetry.ExcludeFromTimeSaving = updatedJobTelemetry.ExcludeFromTimeSaving.Value;
-            }
-
-            if (updatedJobTelemetry.AdditionalInfo != null)
-            {
-                jobTelemetry.AdditionalInfo = updatedJobTelemetry.AdditionalInfo;
-            }
+            // Update properties if they are not null
+            jobTelemetry.ProcessId = updatedJobTelemetry.ProcessId ?? jobTelemetry.ProcessId;
+            jobTelemetry.JobId = updatedJobTelemetry.JobId ?? jobTelemetry.JobId;
+            jobTelemetry.QueueId = updatedJobTelemetry.QueueId ?? jobTelemetry.QueueId;
+            jobTelemetry.StepDescription = updatedJobTelemetry.StepDescription ?? jobTelemetry.StepDescription;
+            jobTelemetry.UniqueReference = updatedJobTelemetry.UniqueReference ?? jobTelemetry.UniqueReference;
+            jobTelemetry.UniqueReferenceType = updatedJobTelemetry.UniqueReferenceType ?? jobTelemetry.UniqueReferenceType;
+            jobTelemetry.BusinessFunction = updatedJobTelemetry.BusinessFunction ?? jobTelemetry.BusinessFunction;
+            jobTelemetry.Geography = updatedJobTelemetry.Geography ?? jobTelemetry.Geography;
+            jobTelemetry.ExcludeFromTimeSaving = updatedJobTelemetry.ExcludeFromTimeSaving;
+            jobTelemetry.AdditionalInfo = updatedJobTelemetry.AdditionalInfo ?? jobTelemetry.AdditionalInfo;
 
             // Save changes
             _context.Entry(jobTelemetry).State = EntityState.Modified;
@@ -177,27 +137,20 @@ namespace _34221700_Project2_CMPG323.Controllers
 
             return NoContent(); // Return 204 No Content on successful update
         }
-        private bool TelemetryExist(int telemetryId)
-        {
-            // Replace with your data access logic
-            var telemetry = _context.JobTelemetries.Find(telemetryId);
-            return telemetry != null;
-        }
-       
+
+        // GET: api/JobTelemetries/GetSavings
         [HttpGet("GetSavings")]
         public async Task<ActionResult> GetSavings(Guid projectId, DateTime startDate, DateTime endDate)
         {
             var savings = await (from jt in _context.JobTelemetries
-                    .Include(jt => jt.Project)
-                                 where jt.Project.ProjectId == projectId &&
+                                 where jt.ProjectID == projectId &&
                                        jt.EntryDate >= startDate &&
                                        jt.EntryDate <= endDate
-                                 group jt by jt.Project.ProjectId into g
+                                 group jt by jt.ProjectID into g
                                  select new
                                  {
                                      ProjectID = g.Key,
-                                     TotalTimeSaved = g.Sum(jt => jt.HumanTime) ?? 0,
-                                     // TotalCostSaved = g.Sum(jt => jt.CostSaved) // Replace with actual field if available
+                                     TotalTimeSaved = g.Sum(jt => !string.IsNullOrEmpty(jt.HumanTime) ? (double.Parse(jt.HumanTime)) : 0)
                                  }).FirstOrDefaultAsync();
             if (savings != null)
             {
@@ -205,11 +158,13 @@ namespace _34221700_Project2_CMPG323.Controllers
             }
             else
             {
-                return NotFound("No telemetry data found for the specified project and date range.");
+                return NotFound();
             }
         }
-        [HttpGet("GetSavingsByClient")]
-        public async Task<ActionResult> GetSavingsByClients(Guid clientId, DateTime startDate, DateTime endDate)
+
+        // GET: api/JobTelemetries/GetClientSavings
+        [HttpGet("GetClientSavings")]
+        public async Task<ActionResult> GetClientSavings(Guid clientId, DateTime startDate, DateTime endDate)
         {
             var savings = await (from jt in _context.JobTelemetries
                                  where jt.ClientId == clientId &&
@@ -219,20 +174,21 @@ namespace _34221700_Project2_CMPG323.Controllers
                                  select new
                                  {
                                      ClientID = g.Key,
-                                     TotalTimeSaved = g.Sum(jt => jt.HumanTime) ?? 0,
-                                     // TotalCostSaved = g.Sum(jt => jt.CostSaved) // Replace with actual field if available
+                                     TotalTimeSaved = g.Sum(jt => !string.IsNullOrEmpty(jt.HumanTime) ? (double.Parse(jt.HumanTime)) : 0)
                                  }).FirstOrDefaultAsync();
-
-            if (savings == null)
+            if (savings != null)
             {
-                return NotFound("No telemetry data found for the specified client and date range.");
+                return Ok(savings);
             }
-
-            return Ok(savings);
+            else
+            {
+                return NotFound();
+            }
         }
 
-
-
+        private bool JobTelemetryExists(Guid id)
+        {
+            return _context.JobTelemetries.Any(e => e.Id == id);
+        }
     }
 }
-
